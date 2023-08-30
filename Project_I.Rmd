@@ -1,0 +1,151 @@
+---
+title: "Project 1"
+author: "Heather Copley"
+date: "2023-08-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
+## Data Input
+
+```{r}
+sheet1 <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv") %>%
+    select(area_name = Area_name, STCOU, ends_with('D')) %>%
+    pivot_longer(cols = ends_with('D'), names_to = 'Enrollment_code', values_to = 'Enrollment_value') %>%
+    mutate(year = year(as.Date(substr(Enrollment_code, 8,9), format = '%y')),
+           measurement = substr(Enrollment_code, 1, 7))
+
+
+county_data <- sheet1 %>%
+    filter(str_detect(area_name, ',' ))
+
+class(county_data) <- c('county', class(county_data))
+
+county_data <- county_data %>%
+    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
+
+
+non_county_data <- sheet1 %>%
+    filter(!str_detect(area_name, ',' )) %>%
+    mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
+                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
+                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
+                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
+                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
+                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
+                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
+                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
+                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
+                                TRUE ~ 'ERROR' )
+                                )
+```
+
+
+```{r}
+
+parse_data <- function(file_location) {
+  
+    sheet1 <- read_csv(file_location) %>%
+    select(area_name = Area_name, STCOU, ends_with('D')) %>%
+    pivot_longer(cols = ends_with('D'), names_to = 'Code', values_to = 'Enrollment_value') %>%
+    mutate(year = year(as.Date(substr(Enrollment_code, 8,9), format = '%y')),
+           measurement = substr(Enrollment_code, 1, 7))  
+    
+    
+    county_data <- sheet1 %>%
+    filter(str_detect(area_name, ',' ))
+
+    class(county_data) <- c('county', class(county_data))
+
+    county_data <- county_data %>%
+    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
+
+
+    non_county_data <- sheet1 %>%
+        filter(!str_detect(area_name, ',' )) %>%
+        mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
+                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
+                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
+                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
+                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
+                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
+                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
+                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
+                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
+                                TRUE ~ 'ERROR' )
+                                )
+    
+    return(list(county_data, non_county_data))
+}
+
+```
+
+## Select columns and pivot from wide to long 
+
+```{r}
+
+urls <- list("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv", "https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
+
+read_in_data <- function(.data, var_name = 'Enrollment') {
+    
+    
+    out <- .data %>%
+            select(area_name = Area_name, STCOU, ends_with('D')) %>%
+            pivot_longer(cols = ends_with('D'), names_to = 'Code', values_to = var_name)
+    
+    invisible(out)
+    
+} 
+
+
+
+```
+
+## Extract Year and Measurement
+
+```{r}
+
+extract <- function(.data, ...) {
+    
+    
+    out <- .data %>%
+         mutate(year = year(as.Date(substr(Code, 8,9), format = '%y')),
+           measurement = substr(Code, 1, 7))
+        
+    
+}
+
+test2 <- extract(test[[1]], 'Enrollment')
+
+
+```
+
+## Split the data into county and state
+
+```{r}
+
+split_areas <- function(.data, ...) {
+    
+    out <- .data %>%
+        mutate(name = if_else(str_detect(area_name, ','), 'County', 'Non_County')) %>%
+        split(.$name)
+        
+   out$County <- c('class', class(out$County))
+   
+   out$Non-County <- 
+
+    class(county_data) <- c('county', class(county_data))
+
+    county_data <- county_data %>%
+    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
+        
+}
+
+```
+
