@@ -1,6 +1,6 @@
 ---
 title: "Project 1"
-author: "Heather Copley"
+author: "Heather Copley & Andy Johnson"
 date: "2023-08-29"
 output: html_document
 ---
@@ -12,7 +12,7 @@ library(tidyverse)
 
 ```
 
-## Data Input
+## Data Input - transforamtion without creating a function
 
 ```{r}
 sheet1 <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv") %>%
@@ -99,7 +99,7 @@ read_in_data <- function(.data, var_name = 'Enrollment') {
             select(area_name = Area_name, STCOU, ends_with('D')) %>%
             pivot_longer(cols = ends_with('D'), names_to = 'Code', values_to = var_name)
     
-    invisible(out)
+    out
     
 } 
 
@@ -118,10 +118,9 @@ extract <- function(.data, ...) {
          mutate(year = year(as.Date(substr(Code, 8,9), format = '%y')),
            measurement = substr(Code, 1, 7))
         
+    out
     
 }
-
-test2 <- extract(test[[1]], 'Enrollment')
 
 
 ```
@@ -136,16 +135,63 @@ split_areas <- function(.data, ...) {
         mutate(name = if_else(str_detect(area_name, ','), 'County', 'Non_County')) %>%
         split(.$name)
         
-   out$County <- c('class', class(out$County))
+   class(out$County) <- c('county', class(out$County))
+   class(out$Non_County) <- c('state', class(out$Non_County))
    
-   out$Non-County <- 
-
-    class(county_data) <- c('county', class(county_data))
-
-    county_data <- county_data %>%
-    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
-        
+   
+   out
 }
 
 ```
 
+## Extract the state (for the county data)
+
+```{r}
+extract_state <- function(.data, ...) {
+    
+out <- .data %>%
+    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
+    
+    out
+
+}
+
+
+```
+
+
+## Assign Divisions to the states (for the non-county data)
+
+```{r}
+
+assign_division <- function(.data, ...) {
+    
+     out <- .data %>%
+        filter(!str_detect(area_name, ',' )) %>%
+        mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
+                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
+                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
+                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
+                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
+                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
+                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
+                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
+                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
+                                TRUE ~ 'ERROR' )
+                                )
+     
+     out
+     
+}
+
+```
+
+## todo: Wrapper function 
+
+## todo: Call function and combine output
+
+## todo: Write generic plot functions for summarizing data
+
+## todo: Put it all together
+
+## todo: Add comments/comentary throughout
