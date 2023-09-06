@@ -90,9 +90,8 @@ parse_data <- function(file_location) {
 
 ```{r}
 
-urls <- list("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv", "https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
 
-read_in_data <- function(.data, var_name = 'Enrollment') {
+select_and_pivot <- function(.data, var_name = 'Enrollment') {
     
     
     out <- .data %>%
@@ -111,7 +110,7 @@ read_in_data <- function(.data, var_name = 'Enrollment') {
 
 ```{r}
 
-extract <- function(.data, ...) {
+extract_year_measurement <- function(.data, ...) {
     
     
     out <- .data %>%
@@ -149,8 +148,14 @@ split_areas <- function(.data, ...) {
 ```{r}
 extract_state <- function(.data, ...) {
     
-out <- .data %>%
+    out <- .data
+    
+    if('county' %in% class(.data)) {
+    
+    out <- out %>%
     mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
+    
+    }
     
     out
 
@@ -166,7 +171,11 @@ out <- .data %>%
 
 assign_division <- function(.data, ...) {
     
-     out <- .data %>%
+    out <- .data
+    
+    if('state' %in% class(.data)) {
+     
+        out <- out %>%
         filter(!str_detect(area_name, ',' )) %>%
         mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
                                 area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
@@ -179,18 +188,68 @@ assign_division <- function(.data, ...) {
                                 area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
                                 TRUE ~ 'ERROR' )
                                 )
-     
+    }
+    
      out
      
 }
 
+
+
 ```
+
+## Combine splitting, extracting state, and assigning divisions
+
+```{r}
+
+split_extract_assign <- function(.data, ...) {
+    
+    splits <- split_areas(.data)
+    
+   out <- splits %>%
+       map(select, -name) %>%
+       map(extract_state) %>%
+       map(assign_division)
+    
+    out
+    
+    
+}
+
+```
+
 
 ## todo: Wrapper function 
 
+```{r}
+urls <- list("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv", "https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
+
+wrapper_function <- function(url,...) {
+    
+    #read in the data
+    out_1 <- read.csv(url)
+    #select columns and pivot from wide to long
+    out_2 <- select_and_pivot(out_1,...)
+    #extract year and measurement
+    out_3 <- extract_year_measurement(out_2, ...)
+    #split data into county and state, extract state, and assign divisions
+    final_out <- split_extract_assign(out_3, ...) 
+    
+    final_out
+
+    
+    }
+
+datasets <- urls[[2]] %>%
+    wrapper_function() 
+    
+
+```
+
+
 ## todo: Call function and combine output
 
-## todo: Write generic plot functions for summarizing data
+## todo: Write generic plot functions for summarizing data 
 
 ## todo: Put it all together
 
