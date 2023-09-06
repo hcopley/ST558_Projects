@@ -44,47 +44,11 @@ non_county_data <- sheet1 %>%
                                 area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
                                 TRUE ~ 'ERROR' )
                                 )
-```
 
-
-```{r}
-
-parse_data <- function(file_location) {
-  
-    sheet1 <- read_csv(file_location) %>%
-    select(area_name = Area_name, STCOU, ends_with('D')) %>%
-    pivot_longer(cols = ends_with('D'), names_to = 'Code', values_to = 'Enrollment_value') %>%
-    mutate(year = year(as.Date(substr(Enrollment_code, 8,9), format = '%y')),
-           measurement = substr(Enrollment_code, 1, 7))  
-    
-    
-    county_data <- sheet1 %>%
-    filter(str_detect(area_name, ',' ))
-
-    class(county_data) <- c('county', class(county_data))
-
-    county_data <- county_data %>%
-    mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
-
-
-    non_county_data <- sheet1 %>%
-        filter(!str_detect(area_name, ',' )) %>%
-        mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
-                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
-                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
-                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
-                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
-                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
-                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
-                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
-                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
-                                TRUE ~ 'ERROR' )
-                                )
-    
-    return(list(county_data, non_county_data))
-}
+class(non_county_data) <- c('state', class(county_data))
 
 ```
+
 
 ## Select columns and pivot from wide to long 
 
@@ -213,16 +177,14 @@ split_extract_assign <- function(.data, ...) {
     
     out
     
-    
 }
 
 ```
 
 
-## todo: Wrapper function 
+## Wrapper function 
 
 ```{r}
-urls <- list("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv", "https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
 
 wrapper_function <- function(url,...) {
     
@@ -239,18 +201,159 @@ wrapper_function <- function(url,...) {
 
     
     }
+```
 
-datasets <- urls[[2]] %>%
-    wrapper_function() 
+
+## Call function and combine output
+
+
+```{r } 
+
+EDU01a <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv")
     
+EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
+
+combine_data <- function(datasets) {
+    
+    County <- datasets %>%
+        map(pluck, 'County') %>%
+        bind_rows()
+        
+        
+    State <- datasets %>%
+        map(pluck, 'Non_County') %>%
+        bind_rows()
+    
+    list('County' = County, 'State' = State)
+    
+    
+}
+
+
+dat <- list(EDU01a, EDU01b) %>%
+   combine_data()
 
 ```
 
 
-## todo: Call function and combine output
+## Generic Plot function for summarizing state data
 
-## todo: Write generic plot functions for summarizing data 
+```{r}
 
-## todo: Put it all together
+plot.state <- function(.data, var_name = 'Enrollment') {
+    
+    out_data <- .data %>%
+        filter(division != 'ERROR') %>%
+        group_by(year, division) %>%
+        summarise(mean = mean(get(var_name)))
+        
+        
+    out_plot <- ggplot(out_data, aes(x = year, y = mean, color = division)) + 
+        geom_line()
+    
+    out_plot
+    
+        
+}
+
+plot(dat$State, var_name = 'Enrollment')
+
+```
+
+## Generic Plot function for summarizing county data
+
+```{r}
+
+plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order = 'top', num = 5) {
+    
+    
+    state_data <- .data %>%
+        filter(state == state_name) 
+    
+    means <- state_data %>%
+        group_by(area_name) %>%
+        summarise(mean = mean(get(var_name))) 
+    
+    
+    if(order == 'top') {
+        
+        plot_order <-  means %>%
+            arrange(-mean) %>%
+            head(num)
+    }
+    
+    if(order == 'bottom') {
+        
+        plot_order <- means %>%
+            arrange(mean) %>%
+            head(num)
+        
+    }
+    
+    plot_data <- state_data %>%
+        filter(area_name %in% plot_order$area_name) 
+    
+    out_plot <- ggplot(plot_data, aes(x = year, y = get(var_name), color = area_name)) + 
+        geom_line() +
+        ylab(var_name)
+    
+    out_plot
+    
+}
+
+plot(dat$County, order = 'bottom', num = 7)
+
+
+
+```
+
+
+
+## Put it all together
+
+```{r}
+#read in and prep data
+EDU01a <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv")
+    
+EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
+
+#combine datasets into state and county
+dat <- list(EDU01a, EDU01b) %>%
+   combine_data()
+
+plot(dat$State, var_name = 'Enrollment')
+plot(dat$County, state_name = 'NC', order = 'top', num = 10)
+plot(dat$County, state_name = 'AZ', order = 'bottom', num = 6)
+plot(dat$County)
+plot(dat$County, state_name = 'OH', order = 'top', num = 8)
+
+
+
+```
+
+## Read in more data
+
+```{r}
+
+PST01a <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv")
+PST01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv")
+PST01c <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv")
+PST01d <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv")
+
+dat <- list(PST01a, PST01b, PST01c, PST01d) %>%
+    combine_data()
+
+plot(dat$State)
+
+plot(dat$County, state_name = 'PA', order = 'top', num = 5)
+plot(dat$County, state_name = 'TX', order = 'bottom', num = 12)
+plot(dat$County)
+plot(dat$County, state_name = 'NY', order = 'top', num = 6)
+
+
+```
+
 
 ## todo: Add comments/comentary throughout
+
+## todo: make html output look nice
