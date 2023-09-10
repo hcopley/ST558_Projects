@@ -2,67 +2,213 @@
 title: "Project 1"
 author: "Heather Copley & Andy Johnson"
 date: "2023-08-29"
-output: html_document
+output: 
+    html_document:
+        toc: true
+        toc_float:
+            toc_collapsed: true
+        code_folding: "show"
+        theme: flatly
+        highlight: haddock
+        df_print: paged
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 
 ```
 
-## Data Input - transforamtion without creating a function
 
-```{r}
-sheet1 <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv") %>%
-    select(area_name = Area_name, STCOU, ends_with('D')) %>%
-    pivot_longer(cols = ends_with('D'), names_to = 'Enrollment_code', values_to = 'Enrollment_value') %>%
+# Objective 
+
+The goal of this project is to write functions that will manipulate and process data sets that come in a certain form. 
+
+## Data Processing without Functions
+
+First we will parse and transform the data without creating functions to better understand the tasks we want to perform.
+One of the data sets can be read from csv from the following link:
+
+```{r read_in_data}
+
+sheet1 <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv") 
+
+```
+
+### Select Columns
+  
+We want to select the following columns:  
+
+* Area_name (rename as area_name)  
+* STCOU  
+* Any column that ends in "D"  
+
+```{r selections}
+
+#select area_name, STCOU, and columns ending with D
+data_selections <- sheet1 %>%
+    select(area_name = Area_name, STCOU, ends_with('D')) 
+
+```
+
+### Pivot Data from Wide to Long 
+
+Next we pivot the data from a wide format to a long format where each row has only one enrollment value for the area.
+
+```{r pivot_data}
+
+#pivot columns ending with D into 2 columns 
+#one for the enrollment code and 
+#one for the values
+data_pivot <- data_selections %>%
+    pivot_longer(cols = ends_with('D'), 
+                 names_to = 'Enrollment_code', 
+                 values_to = 'Enrollment_value') 
+
+```
+
+### Extract Year and Measurement
+
+Now we extract the year and the measurement from the enrollement code.  
+
+The enrollment code follows a pattern:  
+
+* The first three characters are the survey
+* The next four are the type of value from the survey
+* The last two digits prior to the "D" represent the year
+
+```{r extract_measurement_year}
+
+#extract the year (digits 8 & 9) and format as a 4 digit year
+#extract the measurement (the first 7 characters)
+data_extract <- data_pivot %>%
     mutate(year = year(as.Date(substr(Enrollment_code, 8,9), format = '%y')),
            measurement = substr(Enrollment_code, 1, 7))
 
+```
 
-county_data <- sheet1 %>%
+### Split Data
+
+Next we split the data into two data sets, one for county and one for non-county data.
+We also assign classes to each data set.
+
+
+```{r split_data}
+#get the county data 
+county_data <- data_extract %>%
     filter(str_detect(area_name, ',' ))
-
+#assign county class
 class(county_data) <- c('county', class(county_data))
 
+#get the non-county data
+non_county_data <- data_extract %>%
+    filter(!str_detect(area_name, ',' )) 
+##assign state class
+class(non_county_data) <- c('state', class(non_county_data))
+
+```
+
+### Extract State
+
+For the county data, we want to extract the state. 
+
+```{r }
+#extract state names
 county_data <- county_data %>%
     mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
 
+```
 
-non_county_data <- sheet1 %>%
-    filter(!str_detect(area_name, ',' )) %>%
-    mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
-                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
-                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
-                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
-                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
-                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
-                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
-                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
-                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
+### Assign Divisions
+
+For the state data, we want to assign divisions based on the divisions found [here](https://en.wikipedia.org/wiki/List_of_regions_of_the_United_States)
+
+```{r }
+## Assign divisions based on the state
+#if there is no state assign "ERROR"
+
+non_county_data <- non_county_data %>%
+    mutate(division = case_when(area_name %in% toupper(c('Connecticut', 
+                                                         'Maine', 
+                                                         'Massachusetts', 
+                                                         'New Hampshire', 
+                                                         'Rhode Island', 
+                                                         'Vermont')) ~ 'Division 1',
+                                area_name %in% toupper(c('New Jersey', 
+                                                         'New York',
+                                                         'Pennsylvania')) ~ 'Division 2',
+                                area_name %in% toupper(c('Illinois', 
+                                                         'Indiana', 
+                                                         'Michigan', 
+                                                         'Ohio',
+                                                         'Wisconsin')) ~ 'Division 3',
+                                area_name %in% toupper(c('Iowa', 
+                                                         'Kansas', 
+                                                         'Minnesota', 
+                                                         'Missouri', 
+                                                         'Nebraska', 
+                                                         'North Dakota', 
+                                                         'South Dakota')) ~ 'Division 4',
+                                area_name %in% toupper(c('Delaware', 
+                                                         'Florida', 
+                                                         'Georgia', 
+                                                         'Maryland', 
+                                                         'North Carolina', 
+                                                         'South Carolina', 
+                                                         'Virginia', 
+                                                         'District of Columbia', 
+                                                         'West Virginia')) ~ 'Division 5',
+                                area_name %in% toupper(c('Alabama', 
+                                                         'Kentucky', 
+                                                         'Mississippi', 
+                                                         'Tennessee')) ~ 'Division 6',
+                                area_name %in% toupper(c('Arkansas', 
+                                                         'Louisiana', 
+                                                         'Oklahoma', 
+                                                         'Texas')) ~ 'Division 7',
+                                area_name %in% toupper(c('Arizona', 
+                                                         'Colorado', 
+                                                         'Idaho', 
+                                                         'Montana', 
+                                                         'Nevada', 
+                                                         'New Mexico', 
+                                                         'Utah', 
+                                                         'Wyoming')) ~ 'Division 8',
+                                area_name %in% toupper(c('Alaska', 
+                                                         'California', 
+                                                         'Hawaii', 
+                                                         'Oregon', 
+                                                         'Washington')) ~ 'Division 9',
                                 TRUE ~ 'ERROR' )
                                 )
 
-class(non_county_data) <- c('state', class(county_data))
 
 ```
 
 
-## Select columns and pivot from wide to long 
+## Data Processing with Functions
+
+Now that we have gone through the process of transforming the data for a single data set, we want to create functions that will perform these actions on more than one data set with a similar structure.
+
+### Select Columns and Pivot 
+
+Again we will select the appropriate columns and pivot the data from wide to long, but this time creating a function
 
 ```{r}
 
 
 select_and_pivot <- function(.data, var_name = 'Enrollment') {
     
-    
+#select area_name, STCOU, and columns ending with D
+#pivot columns ending with D into 2 columns 
+#one for the enrollment code and 
+#one for the values
     out <- .data %>%
             select(area_name = Area_name, STCOU, ends_with('D')) %>%
             pivot_longer(cols = ends_with('D'), names_to = 'Code', values_to = var_name)
     
-    out
+    return(out)
     
 } 
 
@@ -70,58 +216,74 @@ select_and_pivot <- function(.data, var_name = 'Enrollment') {
 
 ```
 
-## Extract Year and Measurement
+### Extract Year and Measurement
+
+Next we create a function to extract the measurement and year.
 
 ```{r}
 
 extract_year_measurement <- function(.data, ...) {
     
-    
+#extract the year (digits 8 & 9) and format as a 4 digit year
+#extract the measurement (the first 7 characters)  
     out <- .data %>%
          mutate(year = year(as.Date(substr(Code, 8,9), format = '%y')),
            measurement = substr(Code, 1, 7))
         
-    out
+    return(out)
     
 }
 
 
 ```
 
-## Split the data into county and state
+### Split Data
+
+Then we create a function that will split the data into two data sets for county and state, and assign appropriate classes
 
 ```{r}
-
+#if the area_name contains a comma assign it to a county data set
+#otherwise assign it to a non_county data set
 split_areas <- function(.data, ...) {
     
+    #create a county and non-county column and 
+    #then split the data into a list of 2 dataframes on that column
     out <- .data %>%
         mutate(name = if_else(str_detect(area_name, ','), 'County', 'Non_County')) %>%
-        split(.$name)
+        split(.$name) %>%
+        map(select, -name)
         
-   class(out$County) <- c('county', class(out$County))
-   class(out$Non_County) <- c('state', class(out$Non_County))
+    #assign classes to each dataset
+    class(out$County) <- c('county', class(out$County))
+    class(out$Non_County) <- c('state', class(out$Non_County))
    
-   
-   out
+   return(out)
+    
 }
 
 ```
 
-## Extract the state (for the county data)
+### Extract State
+
+We extract the state for the county data. Here we use the class of the data to help us identify the county data.
 
 ```{r}
+
+
 extract_state <- function(.data, ...) {
     
+    #assign the data to a variable called out
     out <- .data
     
+    #if the class of the data is county then extract the state from the area
     if('county' %in% class(.data)) {
     
     out <- out %>%
     mutate(state = substr(area_name, nchar(area_name) -1, nchar(area_name)))
     
-    }
+    } #otherwise do nothing
     
-    out
+    return(out)
 
 }
 
@@ -129,32 +291,78 @@ extract_state <- function(.data, ...) {
 ```
 
 
-## Assign Divisions to the states (for the non-county data)
+### Assign Divisions
+
+Then assign divisions to the non-county data. Here we use the class of the data to identify the state data. 
 
 ```{r}
 
 assign_division <- function(.data, ...) {
     
+    #assign the data to a variable called out
     out <- .data
     
+     #if the class of the data is stat then assign divisions based on the state
     if('state' %in% class(.data)) {
      
         out <- out %>%
         filter(!str_detect(area_name, ',' )) %>%
-        mutate(division = case_when(area_name %in% toupper(c('Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont')) ~ 'Division 1',
-                                area_name %in% toupper(c('New Jersey', 'New York','Pennsylvania')) ~ 'Division 2',
-                                area_name %in% toupper(c('Illinois', 'Indiana', 'Michigan', 'Ohio','Wisconsin')) ~ 'Division 3',
-                                area_name %in% toupper(c('Iowa', 'Kansas', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'South Dakota')) ~ 'Division 4',
-                                area_name %in% toupper(c('Delaware', 'Florida', 'Georgia', 'Maryland', 'North Carolina', 'South Carolina', 'Virginia', 'District of Columbia', 'West Virginia')) ~ 'Division 5',
-                                area_name %in% toupper(c('Alabama', 'Kentucky', 'Mississippi', 'Tennessee')) ~ 'Division 6',
-                                area_name %in% toupper(c('Arkansas', 'Louisiana', 'Oklahoma', 'Texas')) ~ 'Division 7',
-                                area_name %in% toupper(c('Arizona', 'Colorado', 'Idaho', 'Montana', 'Nevada', 'New Mexico', 'Utah', 'Wyoming')) ~ 'Division 8',
-                                area_name %in% toupper(c('Alaska', 'California', 'Hawaii', 'Oregon', 'Washington')) ~ 'Division 9',
+        mutate(division = case_when(area_name %in% toupper(c('Connecticut', 
+                                                             'Maine', 
+                                                             'Massachusetts', 
+                                                             'New Hampshire', 
+                                                             'Rhode Island', 
+                                                             'Vermont')) ~ 'Division 1',
+                                area_name %in% toupper(c('New Jersey', 
+                                                         'New York',
+                                                         'Pennsylvania')) ~ 'Division 2',
+                                area_name %in% toupper(c('Illinois', 
+                                                         'Indiana', 
+                                                         'Michigan', 
+                                                         'Ohio',
+                                                         'Wisconsin')) ~ 'Division 3',
+                                area_name %in% toupper(c('Iowa', 
+                                                         'Kansas', 
+                                                         'Minnesota', 
+                                                         'Missouri', 
+                                                         'Nebraska', 
+                                                         'North Dakota', 
+                                                         'South Dakota')) ~ 'Division 4',
+                                area_name %in% toupper(c('Delaware', 
+                                                         'Florida', 
+                                                         'Georgia', 
+                                                         'Maryland', 
+                                                         'North Carolina', 
+                                                         'South Carolina', 
+                                                         'Virginia', 
+                                                         'District of Columbia', 
+                                                         'West Virginia')) ~ 'Division 5',
+                                area_name %in% toupper(c('Alabama', 
+                                                         'Kentucky', 
+                                                         'Mississippi', 
+                                                         'Tennessee')) ~ 'Division 6',
+                                area_name %in% toupper(c('Arkansas', 
+                                                         'Louisiana', 
+                                                         'Oklahoma', 
+                                                         'Texas')) ~ 'Division 7',
+                                area_name %in% toupper(c('Arizona', 
+                                                         'Colorado', 
+                                                         'Idaho', 
+                                                         'Montana', 
+                                                         'Nevada', 
+                                                         'New Mexico', 
+                                                         'Utah', 
+                                                         'Wyoming')) ~ 'Division 8',
+                                area_name %in% toupper(c('Alaska', 
+                                                         'California', 
+                                                         'Hawaii', 
+                                                         'Oregon', 
+                                                         'Washington')) ~ 'Division 9',
                                 TRUE ~ 'ERROR' )
                                 )
-    }
+    } #otherwise do nothing
     
-     out
+     return(out)
      
 }
 
@@ -162,27 +370,38 @@ assign_division <- function(.data, ...) {
 
 ```
 
-## Combine splitting, extracting state, and assigning divisions
+### Combine Functions
+
+Now we need a function that will perform the splitting of the data sets, extract the state, and assign divisions. We do this by using the functions created above in another function.
 
 ```{r}
 
+#create a function that will use the above functions to
+#1) split the data and assign classes
+#2) extract the state for the county data 
+#3) assign divisions for the non-county data
+#note the map function in the purrr package is used to operate on a list of dataframes
+#we have already used the classes of the datasets to identify which functions to apply to which datasets above
 split_extract_assign <- function(.data, ...) {
     
+    #split the data and assign classes
     splits <- split_areas(.data)
     
+    #extract the state and assign divisions accordingly
    out <- splits %>%
-       map(select, -name) %>%
        map(extract_state) %>%
        map(assign_division)
     
-    out
+    return(out)
     
 }
 
 ```
 
 
-## Wrapper function 
+### Wrapper Function 
+
+Now we put all of the steps together into one function call. Here we create a function that takes the url of the .csv file and performs all of the actions we have previously defined. 
 
 ```{r}
 
@@ -197,15 +416,16 @@ wrapper_function <- function(url,...) {
     #split data into county and state, extract state, and assign divisions
     final_out <- split_extract_assign(out_3, ...) 
     
-    final_out
+    #return the transformed data
+    return(final_out)
 
-    
     }
 ```
 
 
-## Call function and combine output
+### Call Function
 
+Now we will test out our function by calling it two data sets
 
 ```{r } 
 
@@ -213,30 +433,48 @@ EDU01a <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.c
     
 EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
 
+
+``` 
+
+### Combine Data
+
+Lastly we combine the county data and the state data together by binding rows
+
+```{r}
+
+
 combine_data <- function(datasets) {
     
+#bind rows of the county data
     County <- datasets %>%
         map(pluck, 'County') %>%
         bind_rows()
         
-        
+#bind rows of the state data      
     State <- datasets %>%
         map(pluck, 'Non_County') %>%
         bind_rows()
     
-    list('County' = County, 'State' = State)
+    #return a list containing the 2 combined data sets
+    return(list('County' = County, 'State' = State))
     
     
 }
 
-
+#call the function on the data sets to combine into County and State
 dat <- list(EDU01a, EDU01b) %>%
    combine_data()
 
 ```
 
 
-## Generic Plot function for summarizing state data
+## Create Generic Plot functions 
+
+Because the base R plot function is created using the S3 object oriented system, different methods can be assigned to it that perform different actions based on the class of the object that is input into the function. We have already assigned the classes 'state' and 'county' to our data set objects. We will use these classes to create methods which tell the plot function how to operate on these classes. 
+
+### Summarize State Data
+
+First we want to create a plotting method for state data. We want to plot the mean value across each division and year. The data will need to be summarized by the year and division. We want a line plot with the year ont the x-axis, and the mean value (in this case mean of enrollment) on the y-axis.  
 
 ```{r}
 
@@ -251,30 +489,41 @@ plot.state <- function(.data, var_name = 'Enrollment') {
     out_plot <- ggplot(out_data, aes(x = year, y = mean, color = division)) + 
         geom_line()
     
-    out_plot
+    return(out_plot)
     
         
 }
 
+#test the plot method on the state data
 plot(dat$State, var_name = 'Enrollment')
 
 ```
 
-## Generic Plot function for summarizing county data
+### Summarize County Data
+
+Now we create a plotting method for the county data. This time we want to allow the user to have more flexibility.
+
+The user should be able to:  
+
+* Specify the state
+* Choose whether the top or bottom most counties will be shown
+* Enter the number of top or bottom most values they are interested in
 
 ```{r}
 
 plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order = 'top', num = 5) {
     
-    
+    #filter the data to the state entered by the user
     state_data <- .data %>%
         filter(state == state_name) 
     
+    #get the means of each area for the state
     means <- state_data %>%
         group_by(area_name) %>%
         summarise(mean = mean(get(var_name))) 
     
-    
+    #if the user chooses the top most values arrange in descending order
+    #limit to the number selected
     if(order == 'top') {
         
         plot_order <-  means %>%
@@ -282,6 +531,8 @@ plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order
             head(num)
     }
     
+    #if the user chooses the bottom most values arrange in ascending order
+    #limit to the number selected
     if(order == 'bottom') {
         
         plot_order <- means %>%
@@ -290,26 +541,31 @@ plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order
         
     }
     
+    #filter the data set to the top or bottom most areas accordingly
     plot_data <- state_data %>%
         filter(area_name %in% plot_order$area_name) 
     
+    #plot the data
     out_plot <- ggplot(plot_data, aes(x = year, y = get(var_name), color = area_name)) + 
         geom_line() +
         ylab(var_name)
     
-    out_plot
+    return(out_plot)
     
 }
 
+#test the plot method on the county data
 plot(dat$County, order = 'bottom', num = 7)
-
-
 
 ```
 
+## Putting it All Together
 
+Now that we have created our function and our generic plotting methods we want to test it out on our data with various conditions
 
-## Put it all together
+### Testing the Functions and Methods
+
+We will read in and transform the data sets again using our function
 
 ```{r}
 #read in and prep data
@@ -317,21 +573,50 @@ EDU01a <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.c
     
 EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv")
 
+```
+
+Then combine the data into state and county
+
+```{r}
+
 #combine datasets into state and county
 dat <- list(EDU01a, EDU01b) %>%
    combine_data()
 
+
+```
+
+And test various plotting parameters  
+
+* Plot the state data set 
+
+```{r}
+
 plot(dat$State, var_name = 'Enrollment')
+
+```
+
+* Plot the county data set   
+    
+    - Specifying the state to be NC, the group to be top, and the number 10  
+    - Specifying the state to be AZ, the group to be bottom, and the number 6  
+    - Using default parameters  
+    - Specifying the state to be OH, the group to be top, and the number 8  
+    
+    
+```{r, fig.show="hold", out.width="50%"}
+
 plot(dat$County, state_name = 'NC', order = 'top', num = 10)
 plot(dat$County, state_name = 'AZ', order = 'bottom', num = 6)
 plot(dat$County)
 plot(dat$County, state_name = 'OH', order = 'top', num = 8)
 
-
-
 ```
+    
 
-## Read in more data
+### Read in more data
+
+Now we will read in and transform four new data sets using our function.
 
 ```{r}
 
@@ -340,20 +625,39 @@ PST01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01b.c
 PST01c <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv")
 PST01d <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv")
 
+```
+
+Combine the data sets into County and State
+
+```{r}
 dat <- list(PST01a, PST01b, PST01c, PST01d) %>%
     combine_data()
-
-plot(dat$State)
-
-plot(dat$County, state_name = 'PA', order = 'top', num = 5)
-plot(dat$County, state_name = 'TX', order = 'bottom', num = 12)
-plot(dat$County)
-plot(dat$County, state_name = 'NY', order = 'top', num = 6)
-
 
 ```
 
 
-## todo: Add comments/comentary throughout
+And again test the plotting methods on various parameters: 
 
-## todo: make html output look nice
+* Plot the state data set 
+
+```{r}
+
+plot(dat$State)
+
+```
+
+* Plot the county data set  
+
+    - Specifying the state to be “PA”, the group to be top, and the number 5  
+    – Specifying the state to be “TX”, the group to be bottom, and the number 12  
+    – Using default parameters  
+    – Specifying the state to be “NY”, the group being the top, and the number 6  
+
+```{r , fig.show="hold", out.width="50%"}
+plot(dat$County, state_name = 'PA', order = 'top', num = 5)
+plot(dat$County, state_name = 'TX', order = 'bottom', num = 12)
+plot(dat$County)
+plot(dat$County, state_name = 'NY', order = 'top', num = 6)
+```
+    
+    
