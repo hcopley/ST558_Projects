@@ -186,6 +186,16 @@ non_county_data <- non_county_data %>%
 
 ```
 
+To confirm the function of the code above, we'll call the tibbles we just created:
+
+```{r}
+
+county_data
+non_county_data
+
+```
+
+
 
 # Data Processing with Functions
 
@@ -472,9 +482,12 @@ dat <- list(EDU01a, EDU01b) %>%
 
 Because the base R plot function is created using the S3 object oriented system, different methods can be assigned to it that perform different actions based on the class of the object that is input into the function. We have already assigned the classes 'state' and 'county' to our data set objects. We will use these classes to create methods which tell the plot function how to operate on these classes. 
 
+ The `plot.county()` function will filter to a set of counties within a single user-provided state, and plot those county-level values by year. This county-level function also allows the user to select the number of counties appearing in the plot, and also if they want the highest or lowest counties for the measure of interest.
+
+
 ## Summarize State Data
 
-First we want to create a plotting method for state data. We want to plot the mean value across each division and year. The data will need to be summarized by the year and division. We want a line plot with the year ont the x-axis, and the mean value (in this case mean of enrollment) on the y-axis.  
+The state plotting method `plot.state()` will remove the national rows from the data, and then plot the division-level means by year.
 
 ```{r}
 
@@ -488,7 +501,9 @@ plot.state <- function(.data, var_name = 'Enrollment') {
         
     out_plot <- ggplot(out_data, aes(x = year, y = mean, color = division)) + 
         geom_line() + 
-        ggtitle(paste("Average", var_name, "by Division"))
+        ggtitle(paste("Average", var_name, "by Division")) + 
+        xlab("Year") +
+        ylab(paste("Average", var_name))
     
     return(out_plot)
     
@@ -502,7 +517,7 @@ plot(dat$State, var_name = 'Enrollment')
 
 ## Summarize County Data
 
-Now we create a plotting method for the county data. This time we want to allow the user to have more flexibility.
+The `plot.county()` plotting method will filter to a set of counties within a single user-provided state, and plot those county-level values by year. In this method we will allow the user a bit more flexibility. 
 
 The user should be able to:  
 
@@ -512,7 +527,7 @@ The user should be able to:
 
 ```{r}
 
-plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order = 'Top', num = 5) {
+plot.county <- function(.data, state_name = 'SC', var_name = 'Enrollment', order = 'Top', num = 5) {
     
     #filter the data to the state entered by the user
     state_data <- .data %>%
@@ -603,7 +618,7 @@ plot(dat$State, var_name = 'Enrollment')
     
     - Specifying the state to be NC, the group to be top, and the number 10  
     - Specifying the state to be AZ, the group to be bottom, and the number 6  
-    - Using default parameters  
+    - Using default parameters (In our case this is the top 5 counties in South Carolina. Look at what happened when two counties combined their districts in 2006!) 
     - Specifying the state to be OH, the group to be top, and the number 8  
     
     
