@@ -487,7 +487,8 @@ plot.state <- function(.data, var_name = 'Enrollment') {
         
         
     out_plot <- ggplot(out_data, aes(x = year, y = mean, color = division)) + 
-        geom_line()
+        geom_line() + 
+        ggtitle(paste("Average", var_name, "by Division"))
     
     return(out_plot)
     
@@ -511,7 +512,7 @@ The user should be able to:
 
 ```{r}
 
-plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order = 'top', num = 5) {
+plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order = 'Top', num = 5) {
     
     #filter the data to the state entered by the user
     state_data <- .data %>%
@@ -524,7 +525,7 @@ plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order
     
     #if the user chooses the top most values arrange in descending order
     #limit to the number selected
-    if(order == 'top') {
+    if(order == 'Top') {
         
         plot_order <-  means %>%
             arrange(-mean) %>%
@@ -533,7 +534,7 @@ plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order
     
     #if the user chooses the bottom most values arrange in ascending order
     #limit to the number selected
-    if(order == 'bottom') {
+    if(order == 'Bottom') {
         
         plot_order <- means %>%
             arrange(mean) %>%
@@ -548,14 +549,16 @@ plot.county <- function(.data, state_name = 'NC', var_name = 'Enrollment', order
     #plot the data
     out_plot <- ggplot(plot_data, aes(x = year, y = get(var_name), color = area_name)) + 
         geom_line() +
-        ylab(var_name)
+        ylab(var_name) + 
+        xlab("Year") +
+        ggtitle(paste(order, num, "by", var_name, "in", state_name))
     
     return(out_plot)
     
 }
 
 #test the plot method on the county data
-plot(dat$County, order = 'bottom', num = 7)
+plot(dat$County, order = 'Bottom', num = 7)
 
 ```
 
@@ -606,10 +609,10 @@ plot(dat$State, var_name = 'Enrollment')
     
 ```{r, fig.show="hold", out.width="50%"}
 
-plot(dat$County, state_name = 'NC', order = 'top', num = 10)
-plot(dat$County, state_name = 'AZ', order = 'bottom', num = 6)
+plot(dat$County, state_name = 'NC', order = 'Top', num = 10)
+plot(dat$County, state_name = 'AZ', order = 'Bottom', num = 6)
 plot(dat$County)
-plot(dat$County, state_name = 'OH', order = 'top', num = 8)
+plot(dat$County, state_name = 'OH', order = 'Top', num = 8)
 
 ```
     
@@ -646,18 +649,18 @@ plot(dat$State)
 
 ```
 
-* Plot the county data set  
-
+* Plot the county data set   
+    
     - Specifying the state to be “PA”, the group to be top, and the number 5  
     – Specifying the state to be “TX”, the group to be bottom, and the number 12  
     – Using default parameters  
     – Specifying the state to be “NY”, the group being the top, and the number 6  
-
+    
+    
 ```{r , fig.show="hold", out.width="50%"}
-plot(dat$County, state_name = 'PA', order = 'top', num = 5)
-plot(dat$County, state_name = 'TX', order = 'bottom', num = 12)
+plot(dat$County, state_name = 'PA', order = 'Top', num = 5)
+plot(dat$County, state_name = 'TX', order = 'Bottom', num = 12)
 plot(dat$County)
-plot(dat$County, state_name = 'NY', order = 'top', num = 6)
+plot(dat$County, state_name = 'NY', order = 'Top', num = 6)
 ```
-    
-    
+
