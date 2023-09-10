@@ -408,7 +408,7 @@ Now we put all of the steps together into one function call. Here we create a fu
 wrapper_function <- function(url,...) {
     
     #read in the data
-    out_1 <- read.csv(url)
+    out_1 <- read_csv(url)
     #select columns and pivot from wide to long
     out_2 <- select_and_pivot(out_1,...)
     #extract year and measurement

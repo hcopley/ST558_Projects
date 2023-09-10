@@ -3277,7 +3277,7 @@ of the actions we have previously defined.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>wrapper_function <span class="ot">&lt;-</span> <span class="cf">function</span>(url,...) {</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>    </span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>    <span class="co">#read in the data</span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>    out_1 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>    out_1 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(url)</span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>    <span class="co">#select columns and pivot from wide to long</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>    out_2 <span class="ot">&lt;-</span> <span class="fu">select_and_pivot</span>(out_1,...)</span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    <span class="co">#extract year and measurement</span></span>
