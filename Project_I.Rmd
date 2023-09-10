@@ -651,12 +651,13 @@ plot(dat$State)
 
 * Plot the county data set   
     
-    - Specifying the state to be “PA”, the group to be top, and the number 5  
-    – Specifying the state to be “TX”, the group to be bottom, and the number 12  
-    – Using default parameters  
-    – Specifying the state to be “NY”, the group being the top, and the number 6  
+    - Specifying the state to be PA, the group to be top, and the number 5  
+    - Specifying the state to be TX, the group to be bottom, and the number 12  
+    - Using default parameters  
+    - Specifying the state to be NY, the group to be top, and the number 6  
     
     
+
 ```{r , fig.show="hold", out.width="50%"}
 plot(dat$County, state_name = 'PA', order = 'Top', num = 5)
 plot(dat$County, state_name = 'TX', order = 'Bottom', num = 12)
