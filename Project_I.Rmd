@@ -25,7 +25,7 @@ library(tidyverse)
 
 The goal of this project is to write functions that will manipulate and process data sets that come in a certain form. 
 
-## Data Processing without Functions
+# Data Processing without Functions
 
 First we will parse and transform the data without creating functions to better understand the tasks we want to perform.
 One of the data sets can be read from csv from the following link:
@@ -36,7 +36,7 @@ sheet1 <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv")
 
 ```
 
-### Select Columns
+## Select Columns
   
 We want to select the following columns:  
 
@@ -52,7 +52,7 @@ data_selections <- sheet1 %>%
 
 ```
 
-### Pivot Data from Wide to Long 
+## Pivot Data from Wide to Long 
 
 Next we pivot the data from a wide format to a long format where each row has only one enrollment value for the area.
 
@@ -68,7 +68,7 @@ data_pivot <- data_selections %>%
 
 ```
 
-### Extract Year and Measurement
+## Extract Year and Measurement
 
 Now we extract the year and the measurement from the enrollement code.  
 
@@ -88,7 +88,7 @@ data_extract <- data_pivot %>%
 
 ```
 
-### Split Data
+## Split Data
 
 Next we split the data into two data sets, one for county and one for non-county data.
 We also assign classes to each data set.
@@ -109,7 +109,7 @@ class(non_county_data) <- c('state', class(non_county_data))
 
 ```
 
-### Extract State
+## Extract State
 
 For the county data, we want to extract the state. 
 
@@ -120,7 +120,7 @@ county_data <- county_data %>%
 
 ```
 
-### Assign Divisions
+## Assign Divisions
 
 For the state data, we want to assign divisions based on the divisions found [here](https://en.wikipedia.org/wiki/List_of_regions_of_the_United_States)
 
@@ -187,11 +187,11 @@ non_county_data <- non_county_data %>%
 ```
 
 
-## Data Processing with Functions
+# Data Processing with Functions
 
 Now that we have gone through the process of transforming the data for a single data set, we want to create functions that will perform these actions on more than one data set with a similar structure.
 
-### Select Columns and Pivot 
+## Select Columns and Pivot 
 
 Again we will select the appropriate columns and pivot the data from wide to long, but this time creating a function
 
@@ -216,7 +216,7 @@ select_and_pivot <- function(.data, var_name = 'Enrollment') {
 
 ```
 
-### Extract Year and Measurement
+## Extract Year and Measurement
 
 Next we create a function to extract the measurement and year.
 
@@ -237,7 +237,7 @@ extract_year_measurement <- function(.data, ...) {
 
 ```
 
-### Split Data
+## Split Data
 
 Then we create a function that will split the data into two data sets for county and state, and assign appropriate classes
 
@@ -263,7 +263,7 @@ split_areas <- function(.data, ...) {
 
 ```
 
-### Extract State
+## Extract State
 
 We extract the state for the county data. Here we use the class of the data to help us identify the county data.
 
@@ -291,7 +291,7 @@ extract_state <- function(.data, ...) {
 ```
 
 
-### Assign Divisions
+## Assign Divisions
 
 Then assign divisions to the non-county data. Here we use the class of the data to identify the state data. 
 
@@ -370,7 +370,7 @@ assign_division <- function(.data, ...) {
 
 ```
 
-### Combine Functions
+## Combine Functions
 
 Now we need a function that will perform the splitting of the data sets, extract the state, and assign divisions. We do this by using the functions created above in another function.
 
@@ -399,7 +399,7 @@ split_extract_assign <- function(.data, ...) {
 ```
 
 
-### Wrapper Function 
+## Wrapper Function 
 
 Now we put all of the steps together into one function call. Here we create a function that takes the url of the .csv file and performs all of the actions we have previously defined. 
 
@@ -423,7 +423,7 @@ wrapper_function <- function(url,...) {
 ```
 
 
-### Call Function
+## Call Function
 
 Now we will test out our function by calling it two data sets
 
@@ -436,7 +436,7 @@ EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.c
 
 ``` 
 
-### Combine Data
+## Combine Data
 
 Lastly we combine the county data and the state data together by binding rows
 
@@ -468,11 +468,11 @@ dat <- list(EDU01a, EDU01b) %>%
 ```
 
 
-## Create Generic Plot functions 
+# Create Generic Plot functions 
 
 Because the base R plot function is created using the S3 object oriented system, different methods can be assigned to it that perform different actions based on the class of the object that is input into the function. We have already assigned the classes 'state' and 'county' to our data set objects. We will use these classes to create methods which tell the plot function how to operate on these classes. 
 
-### Summarize State Data
+## Summarize State Data
 
 First we want to create a plotting method for state data. We want to plot the mean value across each division and year. The data will need to be summarized by the year and division. We want a line plot with the year ont the x-axis, and the mean value (in this case mean of enrollment) on the y-axis.  
 
@@ -499,7 +499,7 @@ plot(dat$State, var_name = 'Enrollment')
 
 ```
 
-### Summarize County Data
+## Summarize County Data
 
 Now we create a plotting method for the county data. This time we want to allow the user to have more flexibility.
 
@@ -559,11 +559,11 @@ plot(dat$County, order = 'bottom', num = 7)
 
 ```
 
-## Putting it All Together
+# Putting it All Together
 
 Now that we have created our function and our generic plotting methods we want to test it out on our data with various conditions
 
-### Testing the Functions and Methods
+## Testing the Functions and Methods
 
 We will read in and transform the data sets again using our function
 
@@ -614,7 +614,7 @@ plot(dat$County, state_name = 'OH', order = 'top', num = 8)
 ```
     
 
-### Read in more data
+## Read in more data
 
 Now we will read in and transform four new data sets using our function.
 
