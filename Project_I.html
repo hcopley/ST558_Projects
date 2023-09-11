@@ -2953,8 +2953,9 @@ border-radius: 0px;
 
 <div id="objective" class="section level1">
 <h1>Objective</h1>
-<p>The goal of this project is to write functions that will manipulate
-and process data sets that come in a certain form.</p>
+<p>The goal of this project is to write functions that will process and
+visualize data sets that come in a certain form from the US Census
+Bureau.</p>
 </div>
 <div id="data-processing-without-functions" class="section level1">
 <h1>Data Processing without Functions</h1>
@@ -2990,7 +2991,7 @@ row has only one enrollment value for the area.</p>
 </div>
 <div id="extract-year-and-measurement" class="section level2">
 <h2>Extract Year and Measurement</h2>
-<p>Now we extract the year and the measurement from the enrollement
+<p>Now we extract the year and the measurement from the enrollment
 code.</p>
 <p>The enrollment code follows a pattern:</p>
 <ul>
@@ -3006,8 +3007,10 @@ code.</p>
 </div>
 <div id="split-data" class="section level2">
 <h2>Split Data</h2>
-<p>Next we split the data into two data sets, one for county and one for
-non-county data. We also assign classes to each data set.</p>
+<p>Next we split the data into two data sets, one for county-level data
+and one for non-county (state &amp; national) data. We also assign
+classes to each data set to enable class-specific plotting later in the
+project.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co">#get the county data </span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>county_data <span class="ot">&lt;-</span> data_extract <span class="sc">%&gt;%</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">str_detect</span>(area_name, <span class="st">&#39;,&#39;</span> ))</span>
@@ -3022,7 +3025,8 @@ non-county data. We also assign classes to each data set.</p>
 </div>
 <div id="extract-state" class="section level2">
 <h2>Extract State</h2>
-<p>For the county data, we want to extract the state.</p>
+<p>For the county data, we want to extract the two-letter state
+abbreviation for each row.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co">#extract state names</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>county_data <span class="ot">&lt;-</span> county_data <span class="sc">%&gt;%</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">state =</span> <span class="fu">substr</span>(area_name, <span class="fu">nchar</span>(area_name) <span class="sc">-</span><span class="dv">1</span>, <span class="fu">nchar</span>(area_name)))</span></code></pre></div>
@@ -3112,7 +3116,7 @@ these actions on more than one data set with a similar structure.</p>
 <div id="select-columns-and-pivot" class="section level2">
 <h2>Select Columns and Pivot</h2>
 <p>Again we will select the appropriate columns and pivot the data from
-wide to long, but this time creating a function</p>
+wide to long, but this time through the use of functions:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>select_and_pivot <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, <span class="at">var_name =</span> <span class="st">&#39;Enrollment&#39;</span>) {</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>    </span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#select area_name, STCOU, and columns ending with D</span></span>
@@ -3129,7 +3133,8 @@ wide to long, but this time creating a function</p>
 </div>
 <div id="extract-year-and-measurement-1" class="section level2">
 <h2>Extract Year and Measurement</h2>
-<p>Next we create a function to extract the measurement and year.</p>
+<p>Next we create a function to extract the measurement name and
+year:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>extract_year_measurement <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>    </span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#extract the year (digits 8 &amp; 9) and format as a 4 digit year</span></span>
@@ -3145,7 +3150,7 @@ wide to long, but this time creating a function</p>
 <div id="split-data-1" class="section level2">
 <h2>Split Data</h2>
 <p>Then we create a function that will split the data into two data sets
-for county and state, and assign appropriate classes</p>
+for county and state, and assign the appropriate classes:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co">#if the area_name contains a comma assign it to a county data set</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#otherwise assign it to a non_county data set</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>split_areas <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
@@ -3165,10 +3170,10 @@ for county and state, and assign appropriate classes</p>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>    </span>
 <span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>}</span></code></pre></div>
 </div>
-<div id="extract-state-1" class="section level2">
-<h2>Extract State</h2>
-<p>We extract the state for the county data. Here we use the class of
-the data to help us identify the county data.</p>
+<div id="extract-state-abbreviation" class="section level2">
+<h2>Extract State Abbreviation</h2>
+<p>We extract the state abbreviation for the county data. Here we use
+the class of the data to help us identify the data as county-level.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>extract_state <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>    </span>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="co">#assign the data to a variable called out</span></span>
@@ -3188,8 +3193,9 @@ the data to help us identify the county data.</p>
 </div>
 <div id="assign-divisions-1" class="section level2">
 <h2>Assign Divisions</h2>
-<p>Then assign divisions to the non-county data. Here we use the class
-of the data to identify the state data.</p>
+<p>For the non-county (state &amp; national) data, we assign divisions
+based on the state name. Similar to the previous function, we use the
+class of the data to identify it as state data.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>assign_division <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>    </span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>    <span class="co">#assign the data to a variable called out</span></span>
@@ -3261,9 +3267,10 @@ of the data to identify the state data.</p>
 </div>
 <div id="combine-functions" class="section level2">
 <h2>Combine Functions</h2>
-<p>Now we need a function that will perform the splitting of the data
-sets, extract the state, and assign divisions. We do this by using the
-functions created above in another function.</p>
+<p>Now we need a function that will perform the splitting of the initial
+data sets into county vs. non-county, extract the state, and assign
+divisions. We do this by calling several functions created above within
+the body of the function below:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co">#create a function that will use the above functions to</span></span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#1) split the data and assign classes</span></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#2) extract the state for the county data </span></span>
@@ -3286,9 +3293,9 @@ functions created above in another function.</p>
 </div>
 <div id="wrapper-function" class="section level2">
 <h2>Wrapper Function</h2>
-<p>Now we put all of the steps together into one function call. Here we
-create a function that takes the url of the .csv file and performs all
-of the actions we have previously defined.</p>
+<p>Now we put all of the steps together into a single function call. We
+start by downloading the initial .csv dataset via the appropriate url,
+apply the functions created above to create our desired output:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>wrapper_function <span class="ot">&lt;-</span> <span class="cf">function</span>(url,...) {</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>    </span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    <span class="co">#read in the data</span></span>
@@ -3307,7 +3314,7 @@ of the actions we have previously defined.</p>
 </div>
 <div id="call-function" class="section level2">
 <h2>Call Function</h2>
-<p>Now we will test out our function by calling it two data sets</p>
+<p>Now we test out our function by calling it on two data sets:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>EDU01a <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv&quot;</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>    </span>
 <span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>EDU01b <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv&quot;</span>)</span></code></pre></div>
@@ -3315,7 +3322,7 @@ of the actions we have previously defined.</p>
 <div id="combine-data" class="section level2">
 <h2>Combine Data</h2>
 <p>Lastly we combine the county data and the state data together by
-binding rows</p>
+binding rows:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>combine_data <span class="ot">&lt;-</span> <span class="cf">function</span>(datasets) {</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>    </span>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#bind rows of the county data</span></span>
@@ -3341,18 +3348,12 @@ binding rows</p>
 </div>
 <div id="create-generic-plot-functions" class="section level1">
 <h1>Create Generic Plot functions</h1>
-<p>Because the base R plot function is created using the S3 object
-oriented system, different methods can be assigned to it that perform
-different actions based on the class of the object that is input into
-the function. We have already assigned the classes ‘state’ and ‘county’
-to our data set objects. We will use these classes to create methods
-which tell the plot function how to operate on these classes.</p>
-<p>The <code>plot.county()</code> function will filter to a set of
-counties within a single user-provided state, and plot those
-county-level values by year. This county-level function also allows the
-user to select the number of counties appearing in the plot, and also if
-they want the highest or lowest counties for the measure of
-interest.</p>
+<p>Because the base R plot function uses the S3 object oriented system,
+different methods can be assigned to it that perform different actions
+based on the class of the object that is input into the function. We
+have already assigned the classes ‘state’ and ‘county’ to our data set
+objects, and we will use these classes to create methods which tell the
+plot function how to operate on these classes.</p>
 <div id="summarize-state-data" class="section level2">
 <h2>Summarize State Data</h2>
 <p>The state plotting method <code>plot.state()</code> will remove the
@@ -3383,17 +3384,12 @@ year.</p>
 </div>
 <div id="summarize-county-data" class="section level2">
 <h2>Summarize County Data</h2>
-<p>The <code>plot.county()</code> plotting method will filter to a set
-of counties within a single user-provided state, and plot those
-county-level values by year. In this method we will allow the user a bit
-more flexibility.</p>
-<p>The user should be able to:</p>
-<ul>
-<li>Specify the state</li>
-<li>Choose whether the top or bottom most counties will be shown</li>
-<li>Enter the number of top or bottom most values they are interested
-in</li>
-</ul>
+<p>The <code>plot.county()</code> function will filter to a set of
+counties within a single user-provided state, and plot those
+county-level values by year. This county-level function also allows the
+user to select the number of counties appearing in the plot, and also if
+they want the highest or lowest counties for the measure of
+interest.</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>plot.county <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, <span class="at">state_name =</span> <span class="st">&#39;SC&#39;</span>, <span class="at">var_name =</span> <span class="st">&#39;Enrollment&#39;</span>, <span class="at">order =</span> <span class="st">&#39;Top&#39;</span>, <span class="at">num =</span> <span class="dv">5</span>) {</span>
 <span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>    </span>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>    <span class="co">#filter the data to the state entered by the user</span></span>
@@ -3451,12 +3447,12 @@ methods we want to test it out on our data with various conditions</p>
 <div id="testing-the-functions-and-methods" class="section level2">
 <h2>Testing the Functions and Methods</h2>
 <p>We will read in and transform the data sets again using our
-function</p>
+function:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co">#read in and prep data</span></span>
 <span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>EDU01a <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv&quot;</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>    </span>
 <span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>EDU01b <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv&quot;</span>)</span></code></pre></div>
-<p>Then combine the data into state and county</p>
+<p>Then combine the data into state and county:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co">#combine datasets into state and county</span></span>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">list</span>(EDU01a, EDU01b) <span class="sc">%&gt;%</span></span>
 <span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>   <span class="fu">combine_data</span>()</span></code></pre></div>
@@ -3491,12 +3487,12 @@ districts in 2006!)</li>
 <div id="read-in-more-data" class="section level2">
 <h2>Read in more data</h2>
 <p>Now we will read in and transform four new data sets using our
-function.</p>
+function:</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>PST01a <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv&quot;</span>)</span>
 <span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>PST01b <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv&quot;</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>PST01c <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv&quot;</span>)</span>
 <span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>PST01d <span class="ot">&lt;-</span> <span class="fu">wrapper_function</span>(<span class="st">&quot;https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv&quot;</span>)</span></code></pre></div>
-<p>Combine the data sets into County and State</p>
+<p>Combine the data sets into County and State:</p>
 <div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">list</span>(PST01a, PST01b, PST01c, PST01d) <span class="sc">%&gt;%</span></span>
 <span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>    <span class="fu">combine_data</span>()</span></code></pre></div>
 <p>And again test the plotting methods on various parameters:</p>
