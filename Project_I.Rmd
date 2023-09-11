@@ -23,7 +23,7 @@ library(tidyverse)
 
 # Objective 
 
-The goal of this project is to write functions that will manipulate and process data sets that come in a certain form. 
+The goal of this project is to write functions that will process and visualize data sets that come in a certain form from the US Census Bureau. 
 
 # Data Processing without Functions
 
@@ -70,7 +70,7 @@ data_pivot <- data_selections %>%
 
 ## Extract Year and Measurement
 
-Now we extract the year and the measurement from the enrollement code.  
+Now we extract the year and the measurement from the enrollment code.  
 
 The enrollment code follows a pattern:  
 
@@ -90,8 +90,8 @@ data_extract <- data_pivot %>%
 
 ## Split Data
 
-Next we split the data into two data sets, one for county and one for non-county data.
-We also assign classes to each data set.
+Next we split the data into two data sets, one for county-level data and one for non-county (state & national) data.
+We also assign classes to each data set to enable class-specific plotting later in the project.
 
 
 ```{r split_data}
@@ -111,7 +111,7 @@ class(non_county_data) <- c('state', class(non_county_data))
 
 ## Extract State
 
-For the county data, we want to extract the state. 
+For the county data, we want to extract the two-letter state abbreviation for each row. 
 
 ```{r }
 #extract state names
@@ -203,7 +203,7 @@ Now that we have gone through the process of transforming the data for a single 
 
 ## Select Columns and Pivot 
 
-Again we will select the appropriate columns and pivot the data from wide to long, but this time creating a function
+Again we will select the appropriate columns and pivot the data from wide to long, but this time through the use of functions:
 
 ```{r}
 
@@ -228,7 +228,7 @@ select_and_pivot <- function(.data, var_name = 'Enrollment') {
 
 ## Extract Year and Measurement
 
-Next we create a function to extract the measurement and year.
+Next we create a function to extract the measurement name and year:
 
 ```{r}
 
@@ -249,7 +249,7 @@ extract_year_measurement <- function(.data, ...) {
 
 ## Split Data
 
-Then we create a function that will split the data into two data sets for county and state, and assign appropriate classes
+Then we create a function that will split the data into two data sets for county and state, and assign the appropriate classes:
 
 ```{r}
 #if the area_name contains a comma assign it to a county data set
@@ -273,9 +273,9 @@ split_areas <- function(.data, ...) {
 
 ```
 
-## Extract State
+## Extract State Abbreviation
 
-We extract the state for the county data. Here we use the class of the data to help us identify the county data.
+We extract the state abbreviation for the county data. Here we use the class of the data to help us identify the data as county-level.
 
 ```{r}
 
@@ -303,7 +303,7 @@ extract_state <- function(.data, ...) {
 
 ## Assign Divisions
 
-Then assign divisions to the non-county data. Here we use the class of the data to identify the state data. 
+For the non-county (state & national) data, we assign divisions based on the state name. Similar to the previous function, we use the class of the data to identify it as state data. 
 
 ```{r}
 
@@ -382,7 +382,7 @@ assign_division <- function(.data, ...) {
 
 ## Combine Functions
 
-Now we need a function that will perform the splitting of the data sets, extract the state, and assign divisions. We do this by using the functions created above in another function.
+Now we need a function that will perform the splitting of the initial data sets into county vs. non-county, extract the state, and assign divisions. We do this by calling several functions created above within the body of the function below:
 
 ```{r}
 
@@ -411,7 +411,7 @@ split_extract_assign <- function(.data, ...) {
 
 ## Wrapper Function 
 
-Now we put all of the steps together into one function call. Here we create a function that takes the url of the .csv file and performs all of the actions we have previously defined. 
+Now we put all of the steps together into a single function call. We start by downloading the initial .csv dataset via the appropriate url, apply the functions created above to create our desired output: 
 
 ```{r}
 
@@ -435,7 +435,7 @@ wrapper_function <- function(url,...) {
 
 ## Call Function
 
-Now we will test out our function by calling it two data sets
+Now we test out our function by calling it on two data sets:
 
 ```{r } 
 
@@ -448,7 +448,7 @@ EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.c
 
 ## Combine Data
 
-Lastly we combine the county data and the state data together by binding rows
+Lastly we combine the county data and the state data together by binding rows:
 
 ```{r}
 
@@ -480,9 +480,7 @@ dat <- list(EDU01a, EDU01b) %>%
 
 # Create Generic Plot functions 
 
-Because the base R plot function is created using the S3 object oriented system, different methods can be assigned to it that perform different actions based on the class of the object that is input into the function. We have already assigned the classes 'state' and 'county' to our data set objects. We will use these classes to create methods which tell the plot function how to operate on these classes. 
-
- The `plot.county()` function will filter to a set of counties within a single user-provided state, and plot those county-level values by year. This county-level function also allows the user to select the number of counties appearing in the plot, and also if they want the highest or lowest counties for the measure of interest.
+Because the base R plot function uses the S3 object oriented system, different methods can be assigned to it that perform different actions based on the class of the object that is input into the function. We have already assigned the classes 'state' and 'county' to our data set objects, and we will use these classes to create methods which tell the plot function how to operate on these classes. 
 
 
 ## Summarize State Data
@@ -517,13 +515,8 @@ plot(dat$State, var_name = 'Enrollment')
 
 ## Summarize County Data
 
-The `plot.county()` plotting method will filter to a set of counties within a single user-provided state, and plot those county-level values by year. In this method we will allow the user a bit more flexibility. 
-
-The user should be able to:  
-
-* Specify the state
-* Choose whether the top or bottom most counties will be shown
-* Enter the number of top or bottom most values they are interested in
+The `plot.county()` function will filter to a set of counties within a single user-provided state, and plot those county-level values by year. This county-level function also allows the user to select the number of counties appearing in the plot, and also if they want the highest or lowest counties for the measure of interest.
+ 
 
 ```{r}
 
@@ -583,7 +576,7 @@ Now that we have created our function and our generic plotting methods we want t
 
 ## Testing the Functions and Methods
 
-We will read in and transform the data sets again using our function
+We will read in and transform the data sets again using our function:
 
 ```{r}
 #read in and prep data
@@ -593,7 +586,7 @@ EDU01b <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.c
 
 ```
 
-Then combine the data into state and county
+Then combine the data into state and county:
 
 ```{r}
 
@@ -634,7 +627,7 @@ plot(dat$County, state_name = 'OH', order = 'Top', num = 8)
 
 ## Read in more data
 
-Now we will read in and transform four new data sets using our function.
+Now we will read in and transform four new data sets using our function:
 
 ```{r}
 
@@ -645,7 +638,7 @@ PST01d <- wrapper_function("https://www4.stat.ncsu.edu/~online/datasets/PST01d.c
 
 ```
 
-Combine the data sets into County and State
+Combine the data sets into County and State:
 
 ```{r}
 dat <- list(PST01a, PST01b, PST01c, PST01d) %>%
